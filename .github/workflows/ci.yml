@@ -62,7 +62,6 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           railway up \
-            --project "${{ vars.RAILWAY_PROJECT_ID }}" \
             --environment production \
             --service "${{ vars.RAILWAY_SERVICE_NAME }}" \
             --ci
