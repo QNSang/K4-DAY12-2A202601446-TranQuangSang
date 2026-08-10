@@ -1,102 +1,65 @@
-# Thông Tin Deploy — Checkpoint 5
+# Thong Tin Deploy - Checkpoint 5
 
-> Điền file này sau khi deploy xong. `pytest tests/test_cp5.py` đọc file này
-> để tìm địa chỉ service của bạn và gọi thử.
->
-> **Chỉ ghi TÊN biến môi trường, tuyệt đối không dán giá trị token vào đây.**
-> Repo này công khai — dán token vào là mất token.
+## Thong Tin Hoc Vien
 
-## Thông Tin Học Viên
-
-| Mục | Nội dung |
+| Muc | Noi dung |
 |-----|----------|
-| Họ và tên | (điền họ tên) |
-| Mã học viên | (điền mã học viên) |
-| Repo | (điền link repo K4-DAY12-...) |
+| Ho va ten | Tran Quang Sang |
+| Mã học viên | 2A202601446 |
+| Repo | K4-Day12-Cloud-Services-And-Deployment-2A202601446 |
 
 ## Service
 
-| Mục | Nội dung |
+| Muc | Noi dung |
 |-----|----------|
-| Public URL | https://TODO-thay-bang-url-that.up.railway.app |
-| Platform | Railway / Render / Cloud Run — (điền platform bạn dùng) |
-| Ngày deploy | (điền ngày) |
+| Public URL | Local fallback: http://localhost:8000 |
+| Platform | Local fallback bang Docker Compose; cloud target co the dung Railway hoac Render |
+| Ngay deploy | 2026-08-10 |
 
-## Biến Môi Trường Đã Set Trên Cloud
+## Bien Moi Truong Da Set
 
-Ghi tên biến và **nguồn giá trị**, không ghi giá trị:
+Chi liet ke ten bien, khong ghi gia tri secret.
 
-| Biến | Đã set | Ghi chú |
+| Bien | Da set | Ghi chu |
 |------|--------|---------|
-| `PORT` | ✅ | platform tự gán |
-| `API_TOKEN` | ✅ | đặt trong dashboard, không nằm trong repo |
-| `REDIS_URL` | ✅ | (điền: Redis add-on của platform / Upstash / ...) |
-| `BUCKET_CAPACITY` | ✅ | 10 |
-| `REFILL_PER_MINUTE` | ✅ | 10 |
-| `DAILY_BUDGET_USD` | ✅ | 1.0 |
-| `LOG_LEVEL` | ✅ | INFO |
+| `PORT` | yes | local 8000; platform cloud se tu gan |
+| `API_TOKEN` | yes | dat trong `.env` local hoac dashboard cloud, khong nam trong repo |
+| `REDIS_URL` | yes | local compose dung `redis://redis:6379/0`; app local co the dung `redis://localhost:6379/0` |
+| `BUCKET_CAPACITY` | yes | cau hinh rate limit |
+| `REFILL_PER_MINUTE` | yes | cau hinh rate limit |
+| `DAILY_BUDGET_USD` | yes | cau hinh cost guard |
+| `LOG_LEVEL` | yes | cau hinh logging |
+| `LOCAL_FALLBACK` | yes | dat `true` de test CP5 kiem tra local stack |
 
-## Lệnh Kiểm Tra
+## Ket Qua Chay That
 
-Thay `<URL>` bằng Public URL ở trên:
+Dang dung phuong an du phong vi chua deploy len cloud trong luot nay. Stack local da chay bang:
 
-```bash
-# 1. Liveness — mong đợi 200 {"status":"ok"}
-curl -i <URL>/healthz
-
-# 2. Readiness — mong đợi 200 {"status":"ready"} (đã nối được Redis)
-curl -i <URL>/readyz
-
-# 3. Không có token — mong đợi 401 kèm header WWW-Authenticate
-curl -i -X POST <URL>/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Hello"}'
-
-# 4. Có token — mong đợi 200 kèm câu trả lời
-curl -i -X POST <URL>/chat \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $API_TOKEN" \
-  -H "X-Client-Id: sv-test" \
-  -d '{"message":"Deploy là gì?"}'
-
-# 5. Rate limit — gọi 15 lần, những lần cuối phải trả 429
-for i in $(seq 1 15); do
-  curl -s -o /dev/null -w "%{http_code} " -X POST <URL>/chat \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $API_TOKEN" \
-    -H "X-Client-Id: sv-test" \
-    -d '{"message":"test"}'
-done; echo
+```powershell
+docker compose up -d
+docker compose ps
 ```
 
-## Kết Quả Chạy Thật
+Ket qua chinh:
 
-Dán output của các lệnh trên vào đây:
-
+```text
+chat   Up (healthy)   0.0.0.0:8000->8000/tcp
+redis  Up (healthy)   0.0.0.0:6379->6379/tcp
 ```
-(điền output)
+
+Kiem tra API:
+
+```text
+GET  http://localhost:8000/healthz  -> 200 {"status":"ok","service":"day12-chat-service","version":"1.0.0"}
+GET  http://localhost:8000/readyz   -> 200 {"status":"ready","redis":true}
+POST http://localhost:8000/chat without token -> 401
+POST http://localhost:8000/chat with Bearer token -> 200, co truong reply
 ```
 
-## Ảnh Chụp Màn Hình
+## Anh Chung Minh
 
-Đặt ảnh trong thư mục `screenshots/`:
+Anh bang chung local fallback nam trong thu muc `screenshots/`.
 
-- `screenshots/dashboard.png` — trang quản lý service trên platform
-- `screenshots/healthz.png` — kết quả gọi `/healthz` từ trình duyệt hoặc curl
+## Ly Do Dung Phuong An Du Phong
 
----
-
-## Nếu Dùng Phương Án Dự Phòng
-
-Không đăng ký được tài khoản cloud? Vẫn nộp được bài, nhưng CP5 tối đa 60% điểm:
-
-1. Đặt `LOCAL_FALLBACK=true` trong `.env`
-2. Chạy `docker compose up -d` rồi kiểm tra `docker compose ps`
-3. Chụp màn hình vào `screenshots/`
-4. Chạy `pytest tests/test_cp5.py -v` — bộ test sẽ tự chuyển sang kiểm tra
-   `http://localhost:8000`
-5. Ghi rõ lý do không deploy được vào phần dưới đây:
-
-```
-(điền lý do nếu dùng phương án dự phòng, ngược lại xóa mục này)
-```
+Trong phien lam nay chua cau hinh tai khoan cloud Railway/Render va public domain. Vi vay CP5 duoc hoan thanh theo local fallback: Docker Compose chay day du `chat` va `redis`, `/healthz` va `/readyz` deu 200, `/chat` bat buoc Bearer token.
