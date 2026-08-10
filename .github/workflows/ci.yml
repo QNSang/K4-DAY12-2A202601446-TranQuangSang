@@ -60,7 +60,12 @@ jobs:
       - name: Deploy to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --service "${{ vars.RAILWAY_SERVICE_NAME }}"
+        run: |
+          railway up \
+            --project "${{ vars.RAILWAY_PROJECT_ID }}" \
+            --environment production \
+            --service "${{ vars.RAILWAY_SERVICE_NAME }}" \
+            --ci
 
       - name: Smoke test
         run: |
