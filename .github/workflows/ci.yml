@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  RAILWAY_SERVICE_NAME: K4-DAY12-2A202601446-TranQuangSang
+  PUBLIC_URL: https://k4-day12-2a202601446-tranquangsang-production.up.railway.app
+
 jobs:
   test:
     name: Test
@@ -63,10 +67,10 @@ jobs:
         run: |
           railway up \
             --environment production \
-            --service "${{ vars.RAILWAY_SERVICE_NAME }}" \
+            --service "$RAILWAY_SERVICE_NAME" \
             --ci
 
       - name: Smoke test
         run: |
           sleep 45
-          curl -fsS "${{ vars.PUBLIC_URL }}/healthz"
+          curl -fsS "$PUBLIC_URL/healthz"
